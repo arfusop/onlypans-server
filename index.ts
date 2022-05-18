@@ -1,11 +1,12 @@
-import 'dotenv/config'
+import * as dotenv from 'dotenv'
 import { ApolloServer } from 'apollo-server'
 import mongoose from 'mongoose'
 import { GraphQLScalarType, Kind } from 'graphql'
 
 import typeDefs from './gql/typeDefs'
 import { Query, Mutation } from './gql/resolvers'
-import { MONGODB } from './config'
+
+dotenv.config()
 
 const dateScalar = new GraphQLScalarType({
     name: 'Date',
@@ -23,7 +24,9 @@ const dateScalar = new GraphQLScalarType({
         return null // Invalid hard-coded value (not an integer)
     }
 })
+
 const PORT = process.env.PORT || 5001
+const MONGO_URI = process.env.MONGODB ?? ''
 
 const server = new ApolloServer({
     typeDefs,
@@ -34,7 +37,7 @@ const server = new ApolloServer({
 })
 
 mongoose
-    .connect(MONGODB)
+    .connect(MONGO_URI)
     .then(() => {
         console.log('MongoDB Connected')
         return server.listen({ port: PORT })
