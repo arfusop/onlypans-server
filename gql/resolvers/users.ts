@@ -25,10 +25,11 @@ export const Mutation = {
                     }
                 })
             }
-
+            const salt = bcrypt.genSaltSync()
+            const hashedPw = bcrypt.hashSync(password, salt)
             const newUser = new User({
                 email,
-                password
+                password: hashedPw
             })
             const savedUser = await newUser.save()
             return savedUser
