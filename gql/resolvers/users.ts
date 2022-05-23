@@ -80,6 +80,136 @@ export const Mutation = {
             return new Error(error)
         }
     },
+    async updateUser(
+        _: any,
+        {
+            firstName,
+            lastName,
+            dob,
+            gender,
+            height,
+            weight,
+            goalWeight,
+            bodyFat,
+            goalBodyFat,
+            activityLevel,
+            email
+        }: {
+            email: string
+            firstName: string
+            lastName: string
+            dob: Date
+            gender: string
+            height: number
+            weight: number
+            goalWeight: number
+            bodyFat: number
+            goalBodyFat: number
+            activityLevel: string
+        }
+    ) {
+        if (!email) {
+            throw new UserInputError('Invalid Credentials', {
+                errors: {
+                    general: 'Email is required'
+                }
+            })
+        }
+
+        try {
+            const sanitizedEmail = email.toLowerCase()
+            const user = await User.findOne({ email: sanitizedEmail })
+
+            if (!user) {
+                throw new UserInputError('Not Found', {
+                    errors: { general: 'User not found' }
+                })
+            }
+
+            user.firstName = firstName ?? user.firstName
+            user.lastName = lastName ?? user.lastName
+            user.dob = dob ?? user.dob
+            user.gender = gender ?? user.gender
+            user.height = height ?? user.height
+            user.weight = weight ?? user.weight
+            user.goalWeight = goalWeight ?? user.goalWeight
+            user.bodyFat = bodyFat ?? user.bodyFat
+            user.goalBodyFat = goalBodyFat ?? user.goalBodyFat
+            user.activityLevel = activityLevel ?? user.activityLevel
+
+            const updated = await user.save()
+            const token = generateToken(user)
+            // console.log('user: ', user)
+            return { ...updated._doc, id: updated._id, token }
+        } catch (error: any) {
+            return new Error(error)
+        }
+    },
+    // async updatePassword(
+    //     _: any,
+    //     {
+    //         firstName,
+    //         lastName,
+    //         dob,
+    //         gender,
+    //         height,
+    //         weight,
+    //         goalWeight,
+    //         bodyFat,
+    //         goalBodyFat,
+    //         activityLevel,
+    //         email
+    //     }: {
+    //         email: string
+    //         firstName: string
+    //         lastName: string
+    //         dob: Date
+    //         gender: string
+    //         height: number
+    //         weight: number
+    //         goalWeight: number
+    //         bodyFat: number
+    //         goalBodyFat: number
+    //         activityLevel: string
+    //     }
+    // ) {
+    //     if (!email) {
+    //         throw new UserInputError('Invalid Credentials', {
+    //             errors: {
+    //                 general: 'Email is required'
+    //             }
+    //         })
+    //     }
+
+    //     try {
+    //         const sanitizedEmail = email.toLowerCase()
+    //         const user = await User.findOne({ email: sanitizedEmail })
+
+    //         if (!user) {
+    //             throw new UserInputError('Not Found', {
+    //                 errors: { general: 'User not found' }
+    //             })
+    //         }
+
+    //         user.firstName = firstName ?? user.firstName
+    //         user.lastName = lastName ?? user.lastName
+    //         user.dob = dob ?? user.dob
+    //         user.gender = gender ?? user.gender
+    //         user.height = height ?? user.height
+    //         user.weight = weight ?? user.weight
+    //         user.goalWeight = goalWeight ?? user.goalWeight
+    //         user.bodyFat = bodyFat ?? user.bodyFat
+    //         user.goalBodyFat = goalBodyFat ?? user.goalBodyFat
+    //         user.activityLevel = activityLevel ?? user.activityLevel
+
+    //         const updated = await user.save()
+    //         const token = generateToken(user)
+    //         // console.log('user: ', user)
+    //         return { ...updated._doc, id: updated._id, token }
+    //     } catch (error: any) {
+    //         return new Error(error)
+    //     }
+    // },
     async deleteUser(_: any, { id }: { id: string }) {
         try {
             const userToDelete = await User.findById(id)
