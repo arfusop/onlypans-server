@@ -49,11 +49,6 @@ export const validateRequiredFields = (
         general: ''
     }
 
-    // const isValid = Object.values(data).every(item => item)
-    // const values = Object.values(data).map(item => {
-    //     console.log('item:', item)
-    //     return item !== undefined
-    // })
     const missingValues = []
 
     for (const [key, value] of Object.entries(data)) {
@@ -63,8 +58,6 @@ export const validateRequiredFields = (
     }
 
     const isValid = missingValues.length <= 0
-    console.log('isValid: ', isValid)
-    console.log('--')
 
     if (!isValid) {
         errors.general = `Missing values for: ${missingValues.join()}`
