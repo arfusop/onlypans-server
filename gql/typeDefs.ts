@@ -78,6 +78,17 @@ const typeDefs = gql`
             category: String!
             userID: String!
         ): [Recipe]
+        editRecipe(
+            recipeID: String!
+            name: String
+            rating: Float
+            skill: Float
+            servings: Float
+            ingredients: [String]
+            directions: [String]
+            notes: [String]
+            category: String
+        ): [Recipe]
     }
 `
 
