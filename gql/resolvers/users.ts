@@ -9,8 +9,7 @@ import { generateToken } from '../../utils/token'
 export const Mutation = {
     async register(
         _: any,
-        { email, password }: { email: string; password: string },
-        context: any
+        { email, password }: { email: string; password: string }
     ) {
         try {
             const { valid, errors } = validateAuthUser(email, password)
@@ -175,6 +174,20 @@ export const Mutation = {
             if (!user) {
                 throw new UserInputError('Not Found', {
                     errors: { general: 'User not found' }
+                })
+            }
+
+            const isSamePassword = await bcrypt.compare(
+                newPassword,
+                user.password
+            )
+
+            if (isSamePassword) {
+                throw new UserInputError('Matching Passwords', {
+                    errors: {
+                        password:
+                            "Your new password can't match your previous password"
+                    }
                 })
             }
 

@@ -11,7 +11,7 @@ const recipeSchema = new Schema({
     directions: Array,
     notes: Array,
     category: String,
-    userID: Number
+    userID: String
 })
 
 export default model('Recipe', recipeSchema)

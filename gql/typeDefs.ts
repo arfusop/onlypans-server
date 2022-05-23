@@ -3,20 +3,6 @@ import { gql } from 'apollo-server'
 const typeDefs = gql`
     scalar Date
 
-    # input UpdateUserInput {
-    #     firstName: String
-    #     lastName: String
-    #     dob: Date
-    #     gender: String
-    #     height: Float
-    #     weight: Float
-    #     goalWeight: Float
-    #     bodyFat: Float
-    #     goalBodyFat: Float
-    #     activityLevel: String
-    #     email: String!
-    # }
-
     type User {
         id: ID!
         email: String!
@@ -43,15 +29,21 @@ const typeDefs = gql`
         directions: [String!]!
         notes: [String]
         category: String!
-        userID: ID!
+        userID: String!
     }
 
     type Query {
+        # USERS
         getUser(email: String!): [User]
         getAllUsers: [User]
+
+        # RECIPES
+        getAllRecipes: [Recipe]
+        getRecipesByUser(userID: String!): [Recipe]
     }
 
     type Mutation {
+        # USERS
         register(email: String!, password: String!): User!
         login(email: String!, password: String!): User!
         updateUser(
@@ -73,6 +65,19 @@ const typeDefs = gql`
             newPassword: String!
         ): User!
         deleteUser(id: String!): [User]
+
+        # RECIPES
+        createRecipe(
+            name: String!
+            rating: Float!
+            skill: Float!
+            servings: Float!
+            ingredients: [String!]!
+            directions: [String!]!
+            notes: [String]
+            category: String!
+            userID: String!
+        ): [Recipe]
     }
 `
 
