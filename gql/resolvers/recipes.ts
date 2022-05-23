@@ -66,6 +66,16 @@ export const Mutation = {
             })
         }
 
+        const existingRecipes = await Recipe.find({ name })
+        if (existingRecipes?.length > 0) {
+            throw new UserInputError('Existing Recipe', {
+                errors: {
+                    general:
+                        'A recipe with that name already exists. Please edit or delete the existing recipe, or try again with a different name.'
+                }
+            })
+        }
+
         try {
             const newRecipe = new Recipe({
                 name,
@@ -102,8 +112,7 @@ export const Mutation = {
         }: editRecipeMutationProps
     ) {
         try {
-            const recipesById = await Recipe.find({ _id: recipeID })
-            const currentRecipe = recipesById[0]
+            const currentRecipe = await Recipe.findById(recipeID)
             currentRecipe.name = name ?? currentRecipe.name
             currentRecipe.rating = rating ?? currentRecipe.rating
             currentRecipe.skill = skill ?? currentRecipe.skill
@@ -121,6 +130,35 @@ export const Mutation = {
         } catch (error: any) {
             throw new Error(error)
         }
+    },
+    async deleteRecipe(_: any, { recipeID }: { recipeID: string }) {
+        try {
+            const recipe = await Recipe.findById(recipeID)
+            const userID = recipe.userID
+            await recipe.delete()
+            const remainingRecipes = await Recipe.find({ userID })
+
+            return [...remainingRecipes]
+        } catch (error: any) {
+            throw new Error(error)
+        }
+    },
+    async bulkDeleteRecipes(
+        _: any,
+        { ids, userID }: { ids: [string]; userID: string }
+    ) {
+        const deleteRequests: Array<any> = []
+        ids.forEach(id => {
+            const req = Recipe.findByIdAndDelete(id)
+            deleteRequests.push(req)
+        })
+
+        Promise.all(deleteRequests).then(async res => {
+            console.log(res)
+
+            const remainingRecipes = await Recipe.find({ userID })
+            return [...remainingRecipes]
+        })
     }
 }
 

@@ -89,6 +89,8 @@ const typeDefs = gql`
             notes: [String]
             category: String
         ): [Recipe]
+        deleteRecipe(recipeID: String!): [Recipe]
+        bulkDeleteRecipes(ids: [String!]!, userID: String!): [Recipe]
     }
 `
 
