@@ -1,9 +1,9 @@
 import { UserInputError } from 'apollo-server'
-import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 
 import User from '../../models/User'
 import { validateAuthUser } from '../../utils/validators'
+import { VALID_PASSWORD } from '../../utils/regex'
 import { generateToken } from '../../utils/token'
 
 export const Mutation = {
@@ -139,77 +139,57 @@ export const Mutation = {
 
             const updated = await user.save()
             const token = generateToken(user)
-            // console.log('user: ', user)
             return { ...updated._doc, id: updated._id, token }
         } catch (error: any) {
             return new Error(error)
         }
     },
-    // async updatePassword(
-    //     _: any,
-    //     {
-    //         firstName,
-    //         lastName,
-    //         dob,
-    //         gender,
-    //         height,
-    //         weight,
-    //         goalWeight,
-    //         bodyFat,
-    //         goalBodyFat,
-    //         activityLevel,
-    //         email
-    //     }: {
-    //         email: string
-    //         firstName: string
-    //         lastName: string
-    //         dob: Date
-    //         gender: string
-    //         height: number
-    //         weight: number
-    //         goalWeight: number
-    //         bodyFat: number
-    //         goalBodyFat: number
-    //         activityLevel: string
-    //     }
-    // ) {
-    //     if (!email) {
-    //         throw new UserInputError('Invalid Credentials', {
-    //             errors: {
-    //                 general: 'Email is required'
-    //             }
-    //         })
-    //     }
+    async updatePassword(
+        _: any,
+        {
+            email,
+            password,
+            newPassword
+        }: {
+            email: string
+            password: string
+            newPassword: string
+        }
+    ) {
+        if (!VALID_PASSWORD.test(newPassword)) {
+            throw new UserInputError('Invalid Credentials', {
+                errors: {
+                    password: 'Invalid password'
+                }
+            })
+        }
 
-    //     try {
-    //         const sanitizedEmail = email.toLowerCase()
-    //         const user = await User.findOne({ email: sanitizedEmail })
+        const { errors, valid } = validateAuthUser(email, password)
+        if (!valid) {
+            throw new UserInputError('Login Error', { errors })
+        }
+        try {
+            const sanitizedEmail = email.toLocaleLowerCase()
+            const user = await User.findOne({ email: sanitizedEmail })
 
-    //         if (!user) {
-    //             throw new UserInputError('Not Found', {
-    //                 errors: { general: 'User not found' }
-    //             })
-    //         }
+            if (!user) {
+                throw new UserInputError('Not Found', {
+                    errors: { general: 'User not found' }
+                })
+            }
 
-    //         user.firstName = firstName ?? user.firstName
-    //         user.lastName = lastName ?? user.lastName
-    //         user.dob = dob ?? user.dob
-    //         user.gender = gender ?? user.gender
-    //         user.height = height ?? user.height
-    //         user.weight = weight ?? user.weight
-    //         user.goalWeight = goalWeight ?? user.goalWeight
-    //         user.bodyFat = bodyFat ?? user.bodyFat
-    //         user.goalBodyFat = goalBodyFat ?? user.goalBodyFat
-    //         user.activityLevel = activityLevel ?? user.activityLevel
+            const salt = bcrypt.genSaltSync()
+            const hashedPw = bcrypt.hashSync(password, salt)
+            user.password = hashedPw
 
-    //         const updated = await user.save()
-    //         const token = generateToken(user)
-    //         // console.log('user: ', user)
-    //         return { ...updated._doc, id: updated._id, token }
-    //     } catch (error: any) {
-    //         return new Error(error)
-    //     }
-    // },
+            const updated = await user.save()
+            const token = generateToken(user)
+
+            return { ...updated._doc, id: updated._id, token }
+        } catch (error: any) {
+            return new Error(error)
+        }
+    },
     async deleteUser(_: any, { id }: { id: string }) {
         try {
             const userToDelete = await User.findById(id)

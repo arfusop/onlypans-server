@@ -67,6 +67,11 @@ const typeDefs = gql`
             activityLevel: String
             email: String!
         ): User!
+        updatePassword(
+            email: String!
+            password: String!
+            newPassword: String!
+        ): User!
         deleteUser(id: String!): [User]
     }
 `
