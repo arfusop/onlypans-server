@@ -5,6 +5,7 @@ import User from '../../models/User'
 import { validateAuthUser } from '../../utils/validators'
 import { VALID_PASSWORD } from '../../utils/regex'
 import { generateToken } from '../../utils/token'
+import resetPassword from '../../utils/mailer/resetPassword'
 
 export const Mutation = {
     async register(
@@ -211,6 +212,24 @@ export const Mutation = {
             return users
         } catch (error: any) {
             return new Error(error)
+        }
+    },
+    async sendPasswordResetEmail(_: any, { email }: { email: string }) {
+        try {
+            const user = await User.find({ email })
+            if (!user) {
+                throw new UserInputError('User not found', {
+                    errors: {
+                        password:
+                            'No user was found with that email. Please try again, or register for an account'
+                    }
+                })
+            }
+
+            await resetPassword(email)
+            return [...user]
+        } catch (error: any) {
+            throw new Error(error)
         }
     }
 }

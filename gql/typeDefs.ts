@@ -65,6 +65,7 @@ const typeDefs = gql`
             newPassword: String!
         ): User!
         deleteUser(id: String!): [User]
+        sendPasswordResetEmail(email: String!): [User]
 
         # RECIPES
         createRecipe(
