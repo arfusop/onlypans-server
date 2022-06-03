@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import User from '../../models/User'
 import { validateAuthUser } from '../../utils/validators'
 import { VALID_PASSWORD } from '../../utils/regex'
-import { generateToken } from '../../utils/token'
+import { generateToken, generateResetPwToken } from '../../utils/token'
 import resetPassword from '../../utils/mailer/resetPassword'
 
 export const Mutation = {
@@ -53,9 +53,12 @@ export const Mutation = {
             const user = await User.findOne({ email: sanitizedEmail })
 
             if (!user) {
-                throw new UserInputError('Not Found', {
-                    errors: { general: 'User not found' }
-                })
+                throw new UserInputError(
+                    'User not found. Try another email, or create an account with us.',
+                    {
+                        invalid: email
+                    }
+                )
             }
 
             const passwordMatches = await bcrypt.compare(
@@ -178,7 +181,7 @@ export const Mutation = {
                 })
             }
 
-            const isSamePassword = await bcrypt.compare(
+            const isSamePassword = bcrypt.compareSync(
                 newPassword,
                 user.password
             )
@@ -192,14 +195,15 @@ export const Mutation = {
                 })
             }
 
-            const salt = bcrypt.genSaltSync()
-            const hashedPw = bcrypt.hashSync(password, salt)
-            user.password = hashedPw
-
-            const updated = await user.save()
+            bcrypt.genSalt(12, (err, salt) => {
+                bcrypt.hash(newPassword, salt, async (err, hash) => {
+                    user.password = hash
+                    await user.save()
+                })
+            })
             const token = generateToken(user)
 
-            return { ...updated._doc, id: updated._id, token }
+            return { ...user._doc, id: user._id, token }
         } catch (error: any) {
             return new Error(error)
         }
@@ -225,8 +229,8 @@ export const Mutation = {
                     }
                 })
             }
-
-            await resetPassword(email)
+            const token = generateResetPwToken(user[0])
+            await resetPassword(email, token)
             return [...user]
         } catch (error: any) {
             throw new Error(error)

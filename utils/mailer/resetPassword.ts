@@ -4,7 +4,7 @@ import SMTPTransport from 'nodemailer/lib/smtp-transport'
 
 // bring in logo
 
-export default async function (email: string) {
+export default async function (email: string, token: string) {
     const createTransporter = async () => {
         const OAuth2 = google.auth.OAuth2
         const oauth2Client = new OAuth2(
@@ -43,15 +43,13 @@ export default async function (email: string) {
 
     const sendEmail = async () => {
         const transporter = await createTransporter()
-
-        let html
         const header = '<header>OnlyPans</header>'
         const message =
             '<div>To reset your password, click the link below. This is a one time use link. It will expire after you visit the page for the first time.</div>'
-        const url = 'https://www.google.com'
+        const url = `http://localhost:3000/reset-password/${token}`
         const anchor = `<a href="${url}" target="_blank"><button style="background-color: #04132f;color: white; cursor: pointer; border: none;height: 2rem;width: 6rem;margin: auto; border-radius: 2%;font-weight: 500;">RESET</button></a>`
 
-        html = `
+        const html = `
             <div style="width: 50%; margin: auto; text-align: center;">
                 ${header}
                 ${message}

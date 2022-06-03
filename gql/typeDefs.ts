@@ -17,6 +17,7 @@ const typeDefs = gql`
         bodyFat: Float
         goalBodyFat: Float
         activityLevel: String
+        token: String
     }
 
     type Recipe {
@@ -34,7 +35,7 @@ const typeDefs = gql`
 
     type Query {
         # USERS
-        getUser(email: String!): [User]
+        getUser(email: String!): User
         getAllUsers: [User]
 
         # RECIPES
