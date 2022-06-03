@@ -1,16 +1,16 @@
 import { UserInputError } from 'apollo-server'
-import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 
 import User from '../../models/User'
 import { validateAuthUser } from '../../utils/validators'
-import { generateToken } from '../../utils/token'
+import { VALID_PASSWORD } from '../../utils/regex'
+import { generateToken, generateResetPwToken } from '../../utils/token'
+import resetPassword from '../../utils/mailer/resetPassword'
 
 export const Mutation = {
     async register(
         _: any,
-        { email, password }: { email: string; password: string },
-        context: any
+        { email, password }: { email: string; password: string }
     ) {
         try {
             const { valid, errors } = validateAuthUser(email, password)
@@ -53,9 +53,12 @@ export const Mutation = {
             const user = await User.findOne({ email: sanitizedEmail })
 
             if (!user) {
-                throw new UserInputError('Not Found', {
-                    errors: { general: 'User not found' }
-                })
+                throw new UserInputError(
+                    'User not found. Try another email, or create an account with us.',
+                    {
+                        invalid: email
+                    }
+                )
             }
 
             const passwordMatches = await bcrypt.compare(
@@ -80,6 +83,131 @@ export const Mutation = {
             return new Error(error)
         }
     },
+    async updateUser(
+        _: any,
+        {
+            firstName,
+            lastName,
+            dob,
+            gender,
+            height,
+            weight,
+            goalWeight,
+            bodyFat,
+            goalBodyFat,
+            activityLevel,
+            email
+        }: {
+            email: string
+            firstName: string
+            lastName: string
+            dob: Date
+            gender: string
+            height: number
+            weight: number
+            goalWeight: number
+            bodyFat: number
+            goalBodyFat: number
+            activityLevel: string
+        }
+    ) {
+        if (!email) {
+            throw new UserInputError('Invalid Credentials', {
+                errors: {
+                    general: 'Email is required'
+                }
+            })
+        }
+
+        try {
+            const sanitizedEmail = email.toLowerCase()
+            const user = await User.findOne({ email: sanitizedEmail })
+
+            if (!user) {
+                throw new UserInputError('Not Found', {
+                    errors: { general: 'User not found' }
+                })
+            }
+
+            user.firstName = firstName ?? user.firstName
+            user.lastName = lastName ?? user.lastName
+            user.dob = dob ?? user.dob
+            user.gender = gender ?? user.gender
+            user.height = height ?? user.height
+            user.weight = weight ?? user.weight
+            user.goalWeight = goalWeight ?? user.goalWeight
+            user.bodyFat = bodyFat ?? user.bodyFat
+            user.goalBodyFat = goalBodyFat ?? user.goalBodyFat
+            user.activityLevel = activityLevel ?? user.activityLevel
+
+            const updated = await user.save()
+            const token = generateToken(user)
+            return { ...updated._doc, id: updated._id, token }
+        } catch (error: any) {
+            return new Error(error)
+        }
+    },
+    async updatePassword(
+        _: any,
+        {
+            email,
+            password,
+            newPassword
+        }: {
+            email: string
+            password: string
+            newPassword: string
+        }
+    ) {
+        if (!VALID_PASSWORD.test(newPassword)) {
+            throw new UserInputError('Invalid Credentials', {
+                errors: {
+                    password: 'Invalid password'
+                }
+            })
+        }
+
+        const { errors, valid } = validateAuthUser(email, password)
+        if (!valid) {
+            throw new UserInputError('Login Error', { errors })
+        }
+        try {
+            const sanitizedEmail = email.toLocaleLowerCase()
+            const user = await User.findOne({ email: sanitizedEmail })
+
+            if (!user) {
+                throw new UserInputError('Not Found', {
+                    errors: { general: 'User not found' }
+                })
+            }
+
+            const isSamePassword = bcrypt.compareSync(
+                newPassword,
+                user.password
+            )
+
+            if (isSamePassword) {
+                throw new UserInputError('Matching Passwords', {
+                    errors: {
+                        password:
+                            "Your new password can't match your previous password"
+                    }
+                })
+            }
+
+            bcrypt.genSalt(12, (err, salt) => {
+                bcrypt.hash(newPassword, salt, async (err, hash) => {
+                    user.password = hash
+                    await user.save()
+                })
+            })
+            const token = generateToken(user)
+
+            return { ...user._doc, id: user._id, token }
+        } catch (error: any) {
+            return new Error(error)
+        }
+    },
     async deleteUser(_: any, { id }: { id: string }) {
         try {
             const userToDelete = await User.findById(id)
@@ -88,6 +216,24 @@ export const Mutation = {
             return users
         } catch (error: any) {
             return new Error(error)
+        }
+    },
+    async sendPasswordResetEmail(_: any, { email }: { email: string }) {
+        try {
+            const user = await User.find({ email })
+            if (!user) {
+                throw new UserInputError('User not found', {
+                    errors: {
+                        password:
+                            'No user was found with that email. Please try again, or register for an account'
+                    }
+                })
+            }
+            const token = generateResetPwToken(user[0])
+            await resetPassword(email, token)
+            return [...user]
+        } catch (error: any) {
+            throw new Error(error)
         }
     }
 }

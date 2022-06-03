@@ -34,3 +34,37 @@ export const validateAuthUser = (
         errors
     }
 }
+
+type requiredFieldsReturnProps = {
+    valid: boolean
+    errors: {
+        general: string
+    }
+}
+
+export const validateRequiredFields = (
+    data: any
+): requiredFieldsReturnProps => {
+    const errors = {
+        general: ''
+    }
+
+    const missingValues = []
+
+    for (const [key, value] of Object.entries(data)) {
+        if (!value) {
+            missingValues.push(key)
+        }
+    }
+
+    const isValid = missingValues.length <= 0
+
+    if (!isValid) {
+        errors.general = `Missing values for: ${missingValues.join()}`
+    }
+
+    return {
+        valid: isValid,
+        errors
+    }
+}

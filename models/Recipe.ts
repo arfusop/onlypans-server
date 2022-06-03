@@ -9,7 +9,9 @@ const recipeSchema = new Schema({
     servings: Number,
     ingredients: Array,
     directions: Array,
-    notes: Array
+    notes: Array,
+    category: String,
+    userID: String
 })
 
 export default model('Recipe', recipeSchema)
