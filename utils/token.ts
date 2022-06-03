@@ -21,9 +21,7 @@ export const generateResetPwToken = (user: any) => {
         firstName: user?.firstName ?? '',
         lastName: user?.lastName ?? ''
     }
-    console.log('user: ', user)
-    console.log('userData: ', userData)
-    console.log('----')
+
     return jwt.sign({ ...userData }, process.env?.TOKEN_SECRET ?? '', {
         expiresIn: process.env?.TOKEN_EXPIRE ?? '1hr'
     })
