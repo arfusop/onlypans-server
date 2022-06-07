@@ -5,7 +5,15 @@ export const generateToken = (user: any) => {
         id: user._id,
         email: user.email,
         firstName: user?.firstName ?? '',
-        lastName: user?.lastName ?? ''
+        lastName: user?.lastName ?? '',
+        dob: user?.dob ?? null,
+        gender: user?.gender ?? '',
+        height: user?.height ?? null,
+        weight: user?.weight ?? null,
+        goalWeight: user?.goalWeight ?? null,
+        bodyFat: user?.bodyFat ?? null,
+        goalBodyFat: user?.goalBodyFat ?? null,
+        activityLevel: user?.activityLevel ?? ''
     }
 
     return jwt.sign({ ...userData }, process.env?.TOKEN_SECRET ?? '', {
